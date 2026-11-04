@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elder Care Companion</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f7fb;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+header {
+    background: #1976d2;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+
+h2 {
+    margin-bottom: 15px;
+    color: #1976d2;
+}
+
+input, textarea, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: #1976d2;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #125ea8;
+}
+
+.status {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.good {
+    color: green;
+}
+
+.warning {
+    color: orange;
+}
+
+.danger {
+    color: red;
+}
+
+.med-item, .update-item {
+    background: #eef4ff;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 15px;
+}
+
+.emergency-btn {
+    background:red;
+    font-size:18px;
+}
+
+.emergency-btn:hover{
+    background:#b30000;
+}
+
+.small {
+    font-size: .9rem;
+    color:#666;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+    <h1>Elder Care Companion</h1>
+    <p>Daily wellness monitoring and caregiver updates</p>
+</header>
+
+<div class="grid">
+
+<div class="card">
+    <h2>Daily Check-In</h2>
+
+    <label>How are you feeling today?</label>
+
+    <select id="wellness">
+        <option value="Great">Great</option>
+        <option value="Okay">Okay</option>
+        <option value="Not Well">Not Well</option>
+    </select>
+
+    <button onclick="saveCheckIn()">Submit Check-In</button>
+
+    <p class="status" id="statusText">
+        No check-in submitted today.
+    </p>
+</div>
+
+<div class="card">
+    <h2>Emergency Contact</h2>
+
+    <input type="text" id="contactName" placeholder="Contact Name">
+
+    <input type="text" id="contactPhone" placeholder="Phone Number">
+
+    <button onclick="saveContact()">Save Contact</button>
+
+    <div id="contactDisplay"></div>
+
+    <button class="emergency-btn" onclick="emergencyAlert()">
+        Emergency Alert
+    </button>
+</div>
+
+</div>
+
+<div class="grid">
+
+<div class="card">
+    <h2>Medication Reminders</h2>
+
+    <input type="text" id="medicationName" placeholder="Medication Name">
+
+    <input type="time" id="medicationTime">
+
+    <button onclick="addMedication()">
+        Add Medication
+    </button>
+
+    <div id="medicationList"></div>
+</div>
+
+<div class="card">
+    <h2>Family Updates</h2>
+
+    <textarea
+        id="familyUpdate"
+        rows="4"
+        placeholder="Add update for family members..."></textarea>
+
+    <button onclick="addUpdate()">
+        Save Update
+    </button>
+
+    <div id="updatesList"></div>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+loadData();
+
+function saveCheckIn() {
+
+    const wellness =
+        document.getElementById("wellness").value;
+
+    localStorage.setItem("wellness", wellness);
+
+    const status =
+        document.getElementById("statusText");
+
+    if(wellness === "Great"){
+        status.innerHTML =
+            "✓ Feeling Great Today";
+        status.className="status good";
+    }
+    else if(wellness === "Okay"){
+        status.innerHTML =
+            "✓ Feeling Okay Today";
+        status.className="status warning";
+    }
+    else{
+        status.innerHTML =
+            "⚠ Needs Attention";
+        status.className="status danger";
+    }
+}
+
+function saveContact(){
+
+    const contact = {
+        name:
+        document.getElementById("contactName").value,
+        phone:
+        document.getElementById("contactPhone").value
+    };
+
+    localStorage.setItem(
+        "contact",
+        JSON.stringify(contact)
+    );
+
+    displayContact();
+}
+
+function displayContact(){
+
+    const contact =
+        JSON.parse(localStorage.getItem("contact"));
+
+    if(!contact) return;
+
+    document.getElementById("contactDisplay").innerHTML =
+    `
+    <p><strong>${contact.name}</strong></p>
+    <p>${contact.phone}</p>
+    `;
+}
+
+function emergencyAlert(){
+
+    const contact =
+        JSON.parse(localStorage.getItem("contact"));
+
+    if(!contact){
+        alert("No emergency contact saved.");
+        return;
+    }
+
+    alert(
+        `Emergency alert would be sent to:\n${contact.name}\n${contact.phone}`
+    );
+}
+
+function addMedication(){
+
+    let meds =
+        JSON.parse(localStorage.getItem("meds"))
+        || [];
+
+    meds.push({
+        medication:
+            document.getElementById("medicationName").value,
+        time:
+            document.getElementById("medicationTime").value
+    });
+
+    localStorage.setItem(
+        "meds",
+        JSON.stringify(meds)
+    );
+
+    renderMedications();
+}
+
+function renderMedications(){
+
+    let meds =
+        JSON.parse(localStorage.getItem("meds"))
+        || [];
+
+    let html = "";
+
+    meds.forEach(med => {
+        html += `
+        <div class="med-item">
+            <strong>${med.medication}</strong><br>
+            ${med.time}
+        </div>
+        `;
+    });
+
+    document.getElementById("medicationList").innerHTML =
+    html;
+}
+
+function addUpdate(){
+
+    let updates =
+        JSON.parse(localStorage.getItem("updates"))
+        || [];
+
+    updates.unshift({
+        message:
+            document.getElementById("familyUpdate").value,
+        date:
+            new Date().toLocaleString()
+    });
+
+    localStorage.setItem(
+        "updates",
+        JSON.stringify(updates)
+    );
+
+    document.getElementById("familyUpdate").value = "";
+
+    renderUpdates();
+}
+
+function renderUpdates(){
+
+    let updates =
+        JSON.parse(localStorage.getItem("updates"))
+        || [];
+
+    let html = "";
+
+    updates.forEach(update => {
+        html += `
+        <div class="update-item">
+            <strong>${update.date}</strong>
+            <p>${update.message}</p>
+        </div>
+        `;
+    });
+
+    document.getElementById(
+        "updatesList"
+    ).innerHTML = html;
+}
+
+function loadData(){
+
+    renderMedications();
+    renderUpdates();
+    displayContact();
+
+    const wellness =
+        localStorage.getItem("wellness");
+
+    if(wellness){
+
+        const status =
+            document.getElementById("statusText");
+
+        if(wellness === "Great"){
+            status.innerHTML =
+                "✓ Feeling Great Today";
+            status.className =
+                "status good";
+        }
+        else if(wellness === "Okay"){
+            status.innerHTML =
+                "✓ Feeling Okay Today";
+            status.className =
+                "status warning";
+        }
+        else{
+            status.innerHTML =
+                "⚠ Needs Attention";
+            status.className =
+                "status danger";
+        }
+    }
+}
+
+setInterval(() => {
+
+    const meds =
+        JSON.parse(
+            localStorage.getItem("meds")
+        ) || [];
+
+    const now = new Date();
+
+    const current =
+        now.toTimeString().substring(0,5);
+
+    meds.forEach(med => {
+
+        if(med.time === current){
+
+            alert(
+             `Medication Reminder:\n${med.medication}`
+            );
+
+        }
+
+    });
+
+},60000);
+
+</script>
+
+</body>
+</html>
